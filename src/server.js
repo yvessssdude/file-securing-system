@@ -21,7 +21,7 @@ if(!fs.existsSync("uploads")){
     fs.mkdirSync("uploads");
 }
 
-const storage =multer.diskStorage({
+const storage =multer.memoryStorage({
     destination:(req,file,cb) => cb(null, "uploads/"),
     filename:(req,file,cb)=>{
         const unique = Date.now()+"-"+ Math.round(Math.random()*1e9);
@@ -55,20 +55,20 @@ const connectDB = async () => {
 
 app.post('/api/upload', upload.single("file"), async (req, res) => {
     try{
-        const { originalname, size, mimetype, path } = req.file;
+        const { originalname, size, mimetype } = req.file;
+        const buffer = req.file.buffer;
         const { fileName, isPublic } = req.body;
-        const filePath = `uploads/${fileName}`; 
 
     const pool = await connectDB();
     await pool.request()
       .input("name",     sql.NVarChar, fileName || originalname)
       .input("size",     sql.Int,      size)
       .input("type",     sql.NVarChar, mimetype)
-      .input("path",     sql.NVarChar, filePath)
+      .input("data",     sql.VarBinary(sql.MAX), buffer)
       .input("isPublic", sql.Bit,      isPublic === "true" ? 1 : 0)
       .query(`
-        INSERT INTO files (name, size, type, path, is_public)
-        VALUES (@name, @size, @type, @path, @isPublic)
+        INSERT INTO files (name, size, type, data, is_public)
+        VALUES (@name, @size, @type, @data, @isPublic)
       `);
  
     res.json({ success: true });
