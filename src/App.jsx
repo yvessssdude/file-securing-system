@@ -1,10 +1,7 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import './App.css';
 
-
-// We embed the bean image as a styled div since we can't import the file
-// The user should replace BEAN_SRC with their actual bean.png path
-const BEAN_SRC = "./src/assets/bean.png"; // replace with actual path or import
+const BEAN_SRC = "./src/assets/bean.png";
 
 function App() {
   const fileInputRef = useRef(null);
@@ -15,16 +12,11 @@ function App() {
   const [fileType, setFileType] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
-
-  // Done button: active only when file chosen and details not yet "locked"
   const [doneLocked, setDoneLocked] = useState(false);
   const [doneClicked, setDoneClicked] = useState(false);
-
-  // Submit is active only after Done has been clicked at least once
   const [readyToSubmit, setReadyToSubmit] = useState(false);
-
-  // Bean bounce animation trigger
   const [beanBounce, setBeanBounce] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const handleFileChange = (e) => {
     const picked = e.target.files[0];
@@ -44,10 +36,7 @@ function App() {
 
   const handleFileNameChange = (e) => {
     setFileName(e.target.value);
-    // Re-enable Done if user edits the filename after clicking Done
-    if (doneClicked) {
-      setDoneLocked(false);
-    }
+    if (doneClicked) setDoneLocked(false);
   };
 
   const handleDone = () => {
@@ -59,154 +48,162 @@ function App() {
 
   const handleSubmit = async () => {
     if (!readyToSubmit) return;
-    // Simulate upload
-    const formData = new FormData();
-    formData.append('file',file);
-    formData.append('filename',fileName);
-    formData.append('isPublic',isPublic);
 
-    const res =await fetch('http://localhost:3001/api/upload',{
-      method:'POST',
-      body:formData,
-    });
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);           // ✅ matches upload.single("file")
+      formData.append("filename", fileName);   // ✅ matches req.body.filename (lowercase)
+      formData.append("isPublic", isPublic);
 
-    const data=await res.json();
-    if (data.success) alert('Uploaded!');
+      const res = await fetch("http://localhost:3000/api/upload", {
+        method: "POST",
+        body: formData,
+        // ✅ Do NOT set Content-Type manually — browser sets it with boundary for FormData
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Upload failed");
+      }
+
+      const data = await res.json();
+      if (data.success) alert("✅ File uploaded successfully!");
+
+    } catch (err) {
+      alert("❌ Error: " + err.message);
+      console.error(err);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const doneDisabled = !file || doneLocked;
-  const submitDisabled = !readyToSubmit;
+  const submitDisabled = !readyToSubmit || uploading;
 
   return (
-    <>
-      <style>{`
-        
-      `}</style>
+    <div className="page">
+      {/* ---- UPLOAD CARD ---- */}
+      <div className="card upload-card">
+        <div className="card-title">Upload a file</div>
 
-      <div className="page">
-        {/* ---- UPLOAD CARD ---- */}
-        <div className="card upload-card">
-          <div className="card-title">Upload a file</div>
-
-          <div
-            className="bean-area"
-            onClick={() => fileInputRef.current.click()}
-            role="button"
-            aria-label="Pick a file"
-          >
-            <span className="bean-word left">Click</span>
-            <img
-              src={"./src/assets/bean.png"}
-              alt="bean"
-              className={`bean-img${beanBounce ? " bounce" : ""}`}
-            />
-            <span className="bean-word right">Me</span>
-          </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden-input"
-            onChange={handleFileChange}
+        <div
+          className="bean-area"
+          onClick={() => fileInputRef.current.click()}
+          role="button"
+          aria-label="Pick a file"
+        >
+          <span className="bean-word left">Click</span>
+          <img
+            src={BEAN_SRC}
+            alt="bean"
+            className={`bean-img${beanBounce ? " bounce" : ""}`}
           />
-
-          <button
-            className="submit-btn"
-            disabled={submitDisabled}
-            onClick={handleSubmit}
-          >
-            SUBMIT
-          </button>
-
-          {submitDisabled && (
-            <div className="status-hint">
-              {!file ? "Pick a file to begin" : "Confirm details first"}
-            </div>
-          )}
+          <span className="bean-word right">Me</span>
         </div>
 
-        {/* ---- DETAILS CARD ---- */}
-        <div className="card details-card">
-          <div className="card-title">Details</div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden-input"
+          onChange={handleFileChange}
+        />
 
-          <div className="detail-grid">
-            <div className="detail-row">
-              <span className="detail-label">File name:</span>
+        <button
+          className="submit-btn"
+          disabled={submitDisabled}
+          onClick={handleSubmit}
+        >
+          {uploading ? "UPLOADING..." : "SUBMIT"}
+        </button>
+
+        {submitDisabled && !uploading && (
+          <div className="status-hint">
+            {!file ? "Pick a file to begin" : "Confirm details first"}
+          </div>
+        )}
+      </div>
+
+      {/* ---- DETAILS CARD ---- */}
+      <div className="card details-card">
+        <div className="card-title">Details</div>
+
+        <div className="detail-grid">
+          <div className="detail-row">
+            <span className="detail-label">File name:</span>
+            <input
+              className="detail-input"
+              type="text"
+              value={fileName}
+              placeholder="—"
+              onChange={handleFileNameChange}
+              disabled={!file}
+            />
+          </div>
+
+          <div className="detail-row">
+            <span className="detail-label">File size</span>
+            <span className="detail-value">
+              {fileSize ? `${fileSize} KB` : "—"}
+            </span>
+          </div>
+
+          <div className="detail-row">
+            <span className="detail-label">File type</span>
+            <span className="detail-value">{fileType || "—"}</span>
+          </div>
+        </div>
+
+        <div className="toggle-row">
+          <div className="toggle-group">
+            <span className="toggle-label">Public</span>
+            <label className="switch">
               <input
-                className="detail-input"
-                type="text"
-                value={fileName}
-                placeholder="—"
-                onChange={handleFileNameChange}
+                type="checkbox"
+                checked={isPublic}
+                onChange={(e) => {
+                  setIsPublic(e.target.checked);
+                  if (e.target.checked) setIsPrivate(false);
+                  if (doneClicked) setDoneLocked(false);
+                }}
                 disabled={!file}
               />
-            </div>
-
-            <div className="detail-row">
-              <span className="detail-label">File size</span>
-              <span className="detail-value">
-                {fileSize ? `${fileSize} KB` : "—"}
-              </span>
-            </div>
-
-            <div className="detail-row">
-              <span className="detail-label">File type</span>
-              <span className="detail-value">{fileType || "—"}</span>
-            </div>
+              <span className="slider"></span>
+            </label>
           </div>
 
-          <div className="toggle-row">
-            <div className="toggle-group">
-              <span className="toggle-label">Public</span>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={isPublic}
-                  onChange={(e) => {
-                    setIsPublic(e.target.checked);
-                    if (e.target.checked) setIsPrivate(false);
-                    if (doneClicked) setDoneLocked(false);
-                  }}
-                  disabled={!file}
-                />
-                <span className="slider"></span>
-              </label>
-            </div>
-
-            <div className="toggle-group">
-              <span className="toggle-label">Private</span>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={isPrivate}
-                  onChange={(e) => {
-                    setIsPrivate(e.target.checked);
-                    if (e.target.checked) setIsPublic(false);
-                    if (doneClicked) setDoneLocked(false);
-                  }}
-                  disabled={!file}
-                />
-                <span className="slider"></span>
-              </label>
-            </div>
+          <div className="toggle-group">
+            <span className="toggle-label">Private</span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={isPrivate}
+                onChange={(e) => {
+                  setIsPrivate(e.target.checked);
+                  if (e.target.checked) setIsPublic(false);
+                  if (doneClicked) setDoneLocked(false);
+                }}
+                disabled={!file}
+              />
+              <span className="slider"></span>
+            </label>
           </div>
-
-          <button
-            className="done-btn"
-            disabled={doneDisabled}
-            onClick={handleDone}
-          >
-            Done
-          </button>
-
-          {doneLocked && (
-            <div className="status-hint">Edit filename to make changes</div>
-          )}
         </div>
+
+        <button
+          className="done-btn"
+          disabled={doneDisabled}
+          onClick={handleDone}
+        >
+          Done
+        </button>
+
+        {doneLocked && (
+          <div className="status-hint">Edit filename to make changes</div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 
-
-export default App
+export default App;
