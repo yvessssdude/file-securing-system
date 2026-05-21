@@ -93,6 +93,11 @@ export default function FileDetailsPage() {
     }
   };
 
+  const validatePassword = (pw: string) => {
+    const rx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+    return rx.test(pw);
+  };
+
   const handlePrivatePasswordSave = async () => {
     if (privatePassword !== privateConfirmPassword) {
       setError('Passwords do not match');
@@ -100,6 +105,10 @@ export default function FileDetailsPage() {
     }
     if (!privatePassword) {
       setError('Password cannot be empty');
+      return;
+    }
+    if (!validatePassword(privatePassword)) {
+      setError('Password must contain at least 8 characters, an uppercase char, lowercase char, number, and symbol');
       return;
     }
     setIsSaving(true);
@@ -155,6 +164,10 @@ export default function FileDetailsPage() {
     }
     if (!newPassword) {
       alert('Password cannot be empty');
+      return;
+    }
+    if (!validatePassword(newPassword)) {
+      alert('Password must contain at least 8 characters, an uppercase char, lowercase char, number, and symbol');
       return;
     }
 

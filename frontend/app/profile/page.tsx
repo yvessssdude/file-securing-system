@@ -24,6 +24,16 @@ export default function ProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const [fileStats, setFileStats] = useState({ public: 0, private: 0, total: 0 });
+
+  const fetchStats = async () => {
+    try {
+      const data = await api.get<any[]>('/files');
+      const pub = data.filter(f => f.is_public).length;
+      const priv = data.length - pub;
+      setFileStats({ public: pub, private: priv, total: data.length });
+    } catch {}
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -32,8 +42,14 @@ export default function ProfilePage() {
     if (user) {
       setUsername(user.username);
       setEmail(user.email);
+      fetchStats();
     }
   }, [user, loading, router]);
+
+  const validatePassword = (pw: string) => {
+    const rx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+    return rx.test(pw);
+  };
 
   const handleSave = async () => {
     setError('');
@@ -59,6 +75,10 @@ export default function ProfilePage() {
       setError('Please fill in all password fields');
       return;
     }
+    if (!validatePassword(newPassword)) {
+      setError('Password must contain at least 8 characters, an uppercase char, lowercase char, number, and symbol');
+      return;
+    }
     setIsSaving(true);
     try {
       await api.put('/auth/change-password', { currentPassword, newPassword });
@@ -81,7 +101,7 @@ export default function ProfilePage() {
   if (loading || !user) {
     return (
       <main className="min-h-screen bg-background flex flex-col">
-        <Header showBack title="Bean" />
+        <Header showBack title="Profile" />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-foreground/60">Loading...</p>
         </div>
@@ -91,7 +111,7 @@ export default function ProfilePage() {
 
   return (
     <main className="min-h-screen bg-background flex flex-col">
-      <Header showBack title="Bean" />
+      <Header showBack title="Profile" />
 
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
         <div className="max-w-2xl w-full animate-in fade-in duration-500">
@@ -264,7 +284,7 @@ export default function ProfilePage() {
                 <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-3">
                   <FileText className="w-6 h-6 text-accent" />
                 </div>
-                <p className="text-3xl font-bold text-card-foreground mb-1">{totalFilesCount}</p>
+                <p className="text-3xl font-bold text-card-foreground mb-1">{fileStats.total}</p>
                 <p className="text-sm text-card-foreground/80">Total Files</p>
               </div>
 
@@ -272,7 +292,7 @@ export default function ProfilePage() {
                 <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-3">
                   <Globe className="w-6 h-6 text-accent" />
                 </div>
-                <p className="text-3xl font-bold text-card-foreground mb-1">{publicFilesCount}</p>
+                <p className="text-3xl font-bold text-card-foreground mb-1">{fileStats.public}</p>
                 <p className="text-sm text-card-foreground/80">Public Files</p>
               </div>
 
@@ -280,7 +300,7 @@ export default function ProfilePage() {
                 <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-3">
                   <Lock className="w-6 h-6 text-accent" />
                 </div>
-                <p className="text-3xl font-bold text-card-foreground mb-1">{privateFilesCount}</p>
+                <p className="text-3xl font-bold text-card-foreground mb-1">{fileStats.private}</p>
                 <p className="text-sm text-card-foreground/80">Private Files</p>
               </div>
             </div>

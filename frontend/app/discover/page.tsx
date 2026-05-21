@@ -129,7 +129,7 @@ export default function DiscoverPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-background flex flex-col">
-        <Header />
+        <Header title="Loading..." />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-foreground/60">Loading...</p>
         </div>
@@ -139,7 +139,7 @@ export default function DiscoverPage() {
 
   return (
     <main className="min-h-screen bg-background flex flex-col">
-      <Header />
+      <Header title="Discover Files" />
 
       <div className="flex-1 flex flex-col px-4 py-8">
         <div className="max-w-6xl mx-auto w-full">

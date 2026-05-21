@@ -50,6 +50,11 @@ export default function UploadPage() {
     }
   };
 
+  const validatePassword = (pw: string) => {
+    const rx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+    return rx.test(pw);
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!selectedFile || !fileName) return;
@@ -57,6 +62,11 @@ export default function UploadPage() {
 
     if (!isPublic && !filePassword) {
       setError('Password is required for private files');
+      return;
+    }
+    
+    if (filePassword && !validatePassword(filePassword)) {
+      setError('Password must contain at least 8 characters, an uppercase char, lowercase char, number, and symbol');
       return;
     }
 

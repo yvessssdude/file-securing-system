@@ -1,11 +1,16 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { User, LogOut } from 'lucide-react';
+import { User, LogOut, ArrowLeft } from 'lucide-react';
 import { Button } from './ui/button';
 import { removeToken } from '@/lib/auth';
 
-export function Header() {
+interface HeaderProps {
+  title?: string;
+  showBack?: boolean;
+}
+
+export function Header({ title, showBack }: HeaderProps = {}) {
   const router = useRouter();
 
   const handleLogout = () => {
@@ -27,13 +32,23 @@ export function Header() {
       <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-accent/50 to-transparent"></div>
 
       <div className="relative flex items-center justify-between px-8 py-6 z-10">
-        <div className="relative cursor-pointer" onClick={handleBeanClick}>
-          <h1 className="text-3xl font-bold text-card-foreground tracking-tight animate-slide-in-from-left hover:text-accent transition-colors duration-300">
-            Bean
-          </h1>
-          <div className="absolute -bottom-1 left-0 h-1 bg-gradient-to-r from-accent to-transparent w-12 rounded-full" style={{
-            animation: 'gradient-shift 3s ease-in-out infinite'
-          }}></div>
+        <div className="flex items-center gap-4">
+          {showBack && (
+            <button
+              onClick={() => router.back()}
+              className="p-2 text-card-foreground/70 hover:text-accent hover:bg-accent/10 rounded-full transition-all duration-300"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+          )}
+          <div className="relative cursor-pointer" onClick={handleBeanClick}>
+            <h1 className="text-3xl font-bold text-card-foreground tracking-tight animate-slide-in-from-left hover:text-accent transition-colors duration-300">
+              Bean{title && <span className="text-card-foreground/70 text-2xl"> | {title}</span>}
+            </h1>
+            <div className="absolute -bottom-1 left-0 h-1 bg-gradient-to-r from-accent to-transparent w-full max-w-[48px] rounded-full" style={{
+              animation: 'gradient-shift 3s ease-in-out infinite'
+            }}></div>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

@@ -12,7 +12,7 @@ export default function HomePage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-background flex flex-col">
-        <Header />
+        <Header title="Loading..." />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-foreground/60">Loading...</p>
         </div>
@@ -22,7 +22,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-background flex flex-col">
-      <Header />
+      <Header title="Home" />
 
       <div className="flex-1 flex flex-col items-center justify-center px-4">
         <div className="max-w-3xl w-full animate-in fade-in duration-500">

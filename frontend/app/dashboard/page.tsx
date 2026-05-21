@@ -89,7 +89,7 @@ export default function DashboardPage() {
               </p>
               <Button
                 onClick={() => router.push('/upload')}
-                className="bg-input text-foreground hover:bg-muted rounded-full px-8 py-3 font-bold"
+                className="bg-accent text-foreground hover:bg-accent/90 rounded-full px-10 py-4 text-lg font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
               >
                 Upload a file
               </Button>
@@ -99,14 +99,15 @@ export default function DashboardPage() {
               {files.map((file) => (
                 <div
                   key={file.id}
-                  className="group bg-card rounded-2xl p-6 flex items-center justify-between border-2 border-card hover:border-accent hover:shadow-lg transition-all duration-300"
+                  onClick={() => router.push(`/files/${file.id}`)}
+                  className="group bg-card rounded-2xl p-6 flex items-center justify-between border-2 border-card hover:border-accent hover:shadow-lg transition-all duration-300 cursor-pointer"
                 >
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
                       <FileText className="w-6 h-6 text-accent" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-lg font-bold text-card-foreground truncate">
+                      <h3 className="text-lg font-bold text-card-foreground truncate group-hover:text-accent transition-colors duration-300">
                         {file.original_filename}
                       </h3>
                       <p className="text-sm text-card-foreground/60">
@@ -117,18 +118,12 @@ export default function DashboardPage() {
 
                   <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-shrink-0 ml-4">
                     <Button
-                      onClick={() => router.push(`/files/${file.id}`)}
-                      className="bg-input text-foreground hover:bg-muted rounded-full px-6 py-2 text-sm font-bold"
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      View
-                    </Button>
-                    <Button
-                      onClick={() => setDeleteTarget(file)}
+                      onClick={(e) => { e.stopPropagation(); setDeleteTarget(file); }}
                       variant="destructive"
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/80 rounded-full px-6 py-2 text-sm font-bold"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
                     </Button>
                   </div>
                 </div>
