@@ -26,7 +26,7 @@ async function request<T>(
 
   if (res.status === 401) {
     removeToken()
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && window.location.pathname !== "/login") {
       window.location.href = "/login"
     }
     throw new Error("Unauthorized")
