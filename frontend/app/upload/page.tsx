@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { FileText, Download, Lock, Globe } from 'lucide-react';
+import { FileText, Lock, Globe } from 'lucide-react';
 import { api } from '@/lib/api';
 
 export default function UploadPage() {
@@ -16,7 +16,7 @@ export default function UploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState('');
   const [description, setDescription] = useState('');
-  const [isPublic, setIsPublic] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
   const [filePassword, setFilePassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -50,7 +50,7 @@ export default function UploadPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!selectedFile || !fileName) return;
     setError('');
@@ -67,7 +67,7 @@ export default function UploadPage() {
       form.append('file', selectedFile);
       form.append('filename', fileName);
       form.append('description', description);
-      form.append('isPublic', String(isPublic));
+      form.append('isPublic', isPublic ? 'true' : 'false');
       if (filePassword) form.append('filePassword', filePassword);
 
       await api.post<{ id: number }>('/files/upload', form);
@@ -83,7 +83,7 @@ export default function UploadPage() {
     <main className="min-h-screen bg-background flex flex-col">
       <Header showBack title="Upload a file" />
 
-      <div className="flex-1 flex flex-col lg:flex-row gap-8 p-8">
+      <form onSubmit={handleSubmit} className="flex-1 flex flex-col lg:flex-row gap-8 p-8">
         <div className="flex-1 flex flex-col">
           <div
             onDragOver={handleDragOver}
@@ -176,6 +176,7 @@ export default function UploadPage() {
                 onChange={(e) => setFileName(e.target.value)}
                 placeholder="Enter file name"
                 className="w-full bg-input text-foreground border-border rounded-full px-6 py-3 focus:border-accent focus:ring-2 focus:ring-accent/30"
+                required
               />
               {fileName && (
                 <p className="text-xs text-foreground/50 mt-2">
@@ -250,7 +251,7 @@ export default function UploadPage() {
             </div>
 
             <Button
-              onClick={handleSubmit}
+              type="submit"
               disabled={isSubmitting || !selectedFile || !fileName}
               className="w-full bg-accent text-foreground hover:bg-accent/90 disabled:bg-accent/50 rounded-full py-3 font-bold"
             >
@@ -258,7 +259,7 @@ export default function UploadPage() {
             </Button>
           </div>
         </div>
-      </div>
+      </form>
     </main>
   );
 }

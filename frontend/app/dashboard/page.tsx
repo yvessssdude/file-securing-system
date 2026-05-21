@@ -5,6 +5,15 @@ import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Eye, Trash2, FileText } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { api } from '@/lib/api';
 
 interface FileItem {
@@ -19,6 +28,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
 
   const fetchFiles = async () => {
     try {
@@ -33,12 +43,15 @@ export default function DashboardPage() {
 
   useEffect(() => { fetchFiles(); }, []);
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.delete(`/files/${id}`);
-      setFiles(files.filter(f => f.id !== id));
+      await api.delete(`/files/${deleteTarget.id}`);
+      setFiles(files.filter(f => f.id !== deleteTarget.id));
     } catch {
       // handled
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -111,7 +124,7 @@ export default function DashboardPage() {
                       View
                     </Button>
                     <Button
-                      onClick={() => handleDelete(file.id)}
+                      onClick={() => setDeleteTarget(file)}
                       variant="destructive"
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/80 rounded-full px-6 py-2 text-sm font-bold"
                     >
@@ -124,6 +137,31 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent className="bg-card border-2 border-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-card-foreground text-xl">
+              Delete file?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-card-foreground/70">
+              This action cannot be undone. Are you sure you want to delete{' '}
+              <span className="font-bold">{deleteTarget?.original_filename}</span>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-3">
+            <AlertDialogCancel className="bg-input text-foreground hover:bg-muted border-0 rounded-full px-6 py-2 font-bold">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/80 border-0 rounded-full px-6 py-2 font-bold"
+            >
+              Delete
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

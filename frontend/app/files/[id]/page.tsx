@@ -46,6 +46,10 @@ export default function FileDetailsPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [pendingSave, setPendingSave] = useState(false);
+  const [showPrivatePasswordDialog, setShowPrivatePasswordDialog] = useState(false);
+  const [privatePassword, setPrivatePassword] = useState('');
+  const [privateConfirmPassword, setPrivateConfirmPassword] = useState('');
 
   useEffect(() => {
     const fetchFile = async () => {
@@ -65,6 +69,14 @@ export default function FileDetailsPage() {
   }, [params.id, router]);
 
   const handleSave = async () => {
+    if (!editedIsPublic && !file?.has_password && !privatePassword) {
+      setShowPrivatePasswordDialog(true);
+      return;
+    }
+    await doSave();
+  };
+
+  const doSave = async () => {
     setIsSaving(true);
     setError('');
     try {
@@ -76,6 +88,32 @@ export default function FileDetailsPage() {
       setFile(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePrivatePasswordSave = async () => {
+    if (privatePassword !== privateConfirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (!privatePassword) {
+      setError('Password cannot be empty');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await api.put(`/files/${params.id}/password`, {
+        newPassword: privatePassword,
+        confirmPassword: privateConfirmPassword,
+      });
+      setShowPrivatePasswordDialog(false);
+      setPrivatePassword('');
+      setPrivateConfirmPassword('');
+      await doSave();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to set password');
     } finally {
       setIsSaving(false);
     }
@@ -204,38 +242,43 @@ export default function FileDetailsPage() {
             </div>
 
             <div className="space-y-4 border-t border-border pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Globe className="w-5 h-5 text-accent" />
-                  <div>
-                    <p className="text-card-foreground font-semibold">Public Access</p>
-                    <p className="text-xs text-card-foreground/60">
-                      {editedIsPublic ? 'Anyone with the link can access' : 'File is private - only you can access'}
-                    </p>
+              <div className="bg-foreground/5 rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <Globe className="w-5 h-5 text-accent" />
+                    <span className="text-card-foreground font-semibold">Public Access</span>
                   </div>
+                  <Switch
+                    checked={editedIsPublic}
+                    onCheckedChange={setEditedIsPublic}
+                    className="bg-accent/30 data-[state=checked]:bg-accent"
+                  />
                 </div>
-                <Switch
-                  checked={editedIsPublic}
-                  onCheckedChange={setEditedIsPublic}
-                />
+                <p className="text-xs text-card-foreground/60 ml-8">
+                  {editedIsPublic
+                    ? 'Anyone can download without a password'
+                    : 'Password required to download'}
+                </p>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Lock className="w-5 h-5 text-accent" />
-                  <div>
-                    <p className="text-card-foreground font-semibold">Password Protection</p>
-                    <p className="text-xs text-card-foreground/60">
-                      {file.has_password ? 'File is password protected' : 'No password set'}
-                    </p>
+              <div className="bg-foreground/5 rounded-2xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Lock className="w-5 h-5 text-accent" />
+                    <div>
+                      <p className="text-card-foreground font-semibold">Password Protection</p>
+                      <p className="text-xs text-card-foreground/60">
+                        {file.has_password ? 'File is password protected' : 'No password set'}
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    onClick={() => setShowPasswordDialog(true)}
+                    className="px-4 py-2 rounded-full bg-accent hover:bg-accent/90 text-foreground font-semibold text-sm transition-colors"
+                  >
+                    Change
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowPasswordDialog(true)}
-                  className="px-4 py-2 rounded-full bg-accent hover:bg-accent/90 text-foreground font-semibold text-sm transition-colors"
-                >
-                  Change
-                </button>
               </div>
             </div>
 
@@ -268,6 +311,61 @@ export default function FileDetailsPage() {
           </div>
         </div>
       </div>
+
+      <AlertDialog open={showPrivatePasswordDialog} onOpenChange={setShowPrivatePasswordDialog}>
+        <AlertDialogContent className="bg-card border-2 border-card max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-card-foreground text-xl">
+              Password Required
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-card-foreground/70">
+              This file is set to private. Set a password to protect it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-4 my-4">
+            <div>
+              <label className="block text-card-foreground font-medium mb-2 text-sm">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
+                <Input
+                  type="password"
+                  placeholder="Enter password"
+                  value={privatePassword}
+                  onChange={(e) => setPrivatePassword(e.target.value)}
+                  className="pl-10 bg-input text-foreground border-2 border-border rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/30"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-card-foreground font-medium mb-2 text-sm">Confirm Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
+                <Input
+                  type="password"
+                  placeholder="Confirm password"
+                  value={privateConfirmPassword}
+                  onChange={(e) => setPrivateConfirmPassword(e.target.value)}
+                  className="pl-10 bg-input text-foreground border-2 border-border rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/30"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <AlertDialogCancel className="bg-input text-foreground hover:bg-muted border-0 rounded-full px-6 py-2 font-bold">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handlePrivatePasswordSave}
+              className="bg-accent text-foreground hover:bg-accent/90 border-0 rounded-full px-6 py-2 font-bold"
+            >
+              Set Password & Save
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
         <AlertDialogContent className="bg-card border-2 border-card max-w-md">
