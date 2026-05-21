@@ -1,6 +1,6 @@
 import { getToken, removeToken } from "./auth"
 
-const BASE = "/api"
+const BASE = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 async function request<T>(
   path: string,
