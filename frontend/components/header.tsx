@@ -43,7 +43,13 @@ export function Header({ title, showBack }: HeaderProps = {}) {
           )}
           <div className="relative cursor-pointer" onClick={handleBeanClick}>
             <h1 className="text-3xl font-bold text-card-foreground tracking-tight animate-slide-in-from-left hover:text-accent transition-colors duration-300">
-              Bean{title && <span className="text-card-foreground/70 text-2xl mx-4"> | {title}</span>}
+              Bean
+              {title && (
+                <>
+                  <span className="text-card-foreground/70 text-2xl mx-4">|</span>
+                  <span className="text-card-foreground/70 text-2xl">{title}</span>
+                </>
+              )}
             </h1>
             <div className="absolute -bottom-1 left-0 h-1 bg-gradient-to-r from-accent to-transparent w-full max-w-[48px] rounded-full" style={{
               animation: 'gradient-shift 3s ease-in-out infinite'

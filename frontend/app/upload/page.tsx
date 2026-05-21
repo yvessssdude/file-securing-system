@@ -209,10 +209,10 @@ export default function UploadPage() {
 
             {selectedFile && (
               <div className="space-y-2 bg-foreground/5 rounded-xl p-4">
-                <p className="text-sm text-foreground/70">
+                <p className="text-sm text-card-foreground/70">
                   <span className="font-semibold">File size:</span> {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
-                <p className="text-sm text-foreground/70">
+                <p className="text-sm text-card-foreground/70">
                   <span className="font-semibold">File type:</span> {selectedFile.type || 'Unknown'}
                 </p>
               </div>
