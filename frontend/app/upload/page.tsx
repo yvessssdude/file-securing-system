@@ -106,8 +106,8 @@ export default function UploadPage() {
               borderColor: isDragging ? '#B8860B' : '',
             }}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-accent/10 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute inset-0 pointer-events-none rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{
               boxShadow: isDragging ? 'inset 0 0 30px rgba(184, 134, 11, 0.2)' : 'none'
             }}></div>
             <input
@@ -164,7 +164,7 @@ export default function UploadPage() {
           <div className="relative bg-card rounded-3xl p-8 border-2 border-card flex-1 flex flex-col gap-6 overflow-hidden group" style={{
             boxShadow: '0 10px 40px rgba(184, 134, 11, 0.08)'
           }}>
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
 
             <div className="relative z-10">
               <label className="block text-card-foreground font-semibold mb-3">
@@ -253,7 +253,7 @@ export default function UploadPage() {
             <Button
               type="submit"
               disabled={isSubmitting || !selectedFile || !fileName}
-              className="w-full bg-accent text-foreground hover:bg-accent/90 disabled:bg-accent/50 rounded-full py-3 font-bold"
+              className="relative z-10 w-full bg-accent text-foreground hover:bg-accent/90 disabled:bg-accent/50 rounded-full py-3 font-bold"
             >
               {isSubmitting ? 'Uploading...' : 'Submit'}
             </Button>
