@@ -1,8 +1,8 @@
-node_modules
-.next
+**/node_modules
+**/.next
 .git
 *.md
 *.zip
-__pycache__
-*.pyc
-.venv
+**/__pycache__
+**/*.pyc
+**/.venv
