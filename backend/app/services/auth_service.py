@@ -12,6 +12,9 @@ def register_user(db: Session, username: str, email: str, password: str) -> User
     if existing:
         raise ValueError("Username or email already taken")
 
+    if len(password) < 6:
+        raise ValueError("Password must be at least 6 characters")
+
     user = User(
         username=username,
         email=email,
