@@ -1,0 +1,54 @@
+services:
+  mssql:
+    build:
+      context: ./mssql
+      dockerfile: Dockerfile
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${SA_PASSWORD}
+      - MSSQL_PID=Express
+    volumes:
+      - mssql_data:/var/opt/mssql
+    restart: unless-stopped
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "${SA_PASSWORD}" -C -Q "SELECT 1" || exit 1
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/backend/Dockerfile
+    environment:
+      - DATABASE_URL=mssql+pyodbc://sa:${SA_PASSWORD}@mssql:1433/SecureFileSharing?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes
+      - SECRET_KEY=${SECRET_KEY}
+      - UPLOAD_DIR=/srv/private_uploads
+    volumes:
+      - uploads:/srv/private_uploads
+    depends_on:
+      mssql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "127.0.0.1:8000:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --url http://nginx:80
+    depends_on:
+      - nginx
+    restart: unless-stopped
+
+volumes:
+  mssql_data:
+  uploads:
