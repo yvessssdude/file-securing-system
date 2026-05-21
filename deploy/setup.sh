@@ -26,7 +26,18 @@ if [ ! -f .env ]; then
     echo "[2/4] Generating .env from .env.example..."
     cp .env.example .env
 
-    SA_PASS=$(openssl rand -base64 18 | tr -dc 'A-Za-z0-9' | head -c 16)
+    SA_PASS=$(python3 -c "
+import secrets, string
+safe_sym = '-._~'
+all_chars = string.ascii_uppercase + string.ascii_lowercase + string.digits + safe_sym
+pw = [secrets.choice(string.ascii_uppercase),
+      secrets.choice(string.ascii_lowercase),
+      secrets.choice(string.digits),
+      secrets.choice(safe_sym)]
+pw += [secrets.choice(all_chars) for _ in range(12)]
+secrets.SystemRandom().shuffle(pw)
+print(''.join(pw))
+")
     SECRET=$(openssl rand -base64 32)
 
     sed -i "s/CHANGE_ME_SA_PASSWORD/$SA_PASS/g" .env
