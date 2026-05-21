@@ -11,11 +11,11 @@ services:
       - mssql_data:/var/opt/mssql
     restart: unless-stopped
     healthcheck:
-      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "${SA_PASSWORD}" -C -Q "SELECT 1" || exit 1
-      interval: 15s
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "${SA_PASSWORD}" -C -Q "IF DB_ID('SecureFileSharing') IS NOT NULL SELECT 1 ELSE RAISERROR('DB not ready',16,1)" -b || exit 1
+      interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 40s
+      retries: 20
+      start_period: 30s
 
   backend:
     build:
