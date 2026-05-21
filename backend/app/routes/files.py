@@ -9,7 +9,7 @@ from app.middleware.auth_middleware import get_current_user
 from app.middleware.rate_limit import limiter
 from app.models.user import User
 from app.models.file import File as FileModel
-from app.schemas.file import FileResponse, UpdateFileRequest, ChangeFilePasswordRequest
+from app.schemas.file import FileResponse as FileSchema, UpdateFileRequest, ChangeFilePasswordRequest
 
 router = APIRouter(prefix="/files", tags=["Files"])
 
@@ -33,7 +33,7 @@ def upload(
         audit_service.log_action(
             db, "FILE_UPLOADED", current_user.id, db_file.id, request.client.host,
         )
-        return FileResponse.model_validate(db_file)
+        return FileSchema.model_validate(db_file)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -44,7 +44,7 @@ def list_files(
     db: Session = Depends(get_db),
 ):
     files = file_service.get_user_files(db, current_user.id)
-    return [FileResponse.model_validate(f) for f in files]
+    return [FileSchema.model_validate(f) for f in files]
 
 
 @router.get("/{file_id}")
@@ -59,7 +59,7 @@ def get_file(
     if not file_service.can_access_file(db, file_id, current_user.id):
         raise HTTPException(status_code=403, detail="Access denied")
 
-    return FileResponse.model_validate(db_file)
+    return FileSchema.model_validate(db_file)
 
 
 @router.put("/{file_id}")
@@ -74,7 +74,7 @@ def update_file(
             db, file_id, current_user.id, body.filename, body.description, body.isPublic,
         )
         audit_service.log_action(db, "FILE_UPDATED", current_user.id, file_id)
-        return FileResponse.model_validate(db_file)
+        return FileSchema.model_validate(db_file)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

@@ -298,7 +298,8 @@ export default function FileDetailsPage() {
             <div className="space-y-3 border-t border-border pt-6">
               <Button
                 onClick={handleDownload}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full py-4 font-bold text-base flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                variant="secondary"
+                className="w-full rounded-full py-4 font-bold text-base flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
               >
                 <Download className="w-5 h-5" />
                 Download File
