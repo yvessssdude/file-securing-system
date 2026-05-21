@@ -26,11 +26,10 @@ if [ ! -f .env ]; then
     echo "[2/4] Generating .env from .env.example..."
     cp .env.example .env
 
-    SA_PASS=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')
-    SA_PASS="${SA_PASS}1!"
+    SA_PASS=$(openssl rand -base64 18 | tr -dc 'A-Za-z0-9' | head -c 16)
     SECRET=$(openssl rand -base64 32)
 
-    sed -i "s/CHANGE_ME_SA_PASSWORD1!/$SA_PASS/g" .env
+    sed -i "s/CHANGE_ME_SA_PASSWORD/$SA_PASS/g" .env
     sed -i "s/CHANGE_ME_SECRET_KEY/$SECRET/g" .env
 
     echo "  SA_PASSWORD: $SA_PASS"
