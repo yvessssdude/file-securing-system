@@ -1,33 +1,57 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Eye, Trash2, FileText } from 'lucide-react';
+import { api } from '@/lib/api';
 
 interface FileItem {
-  id: string;
-  name: string;
-  size: string;
-  type: string;
-  uploadedAt: string;
+  id: number;
+  original_filename: string;
+  file_size: number;
+  mime_type: string;
+  uploaded_at: string;
 }
-
-// Mock data
-const mockFiles: FileItem[] = [
-  { id: '1', name: 'presentation.pdf', size: '2.5 MB', type: 'PDF', uploadedAt: '2 hours ago' },
-  { id: '2', name: 'spreadsheet.xlsx', size: '1.2 MB', type: 'Excel', uploadedAt: '1 day ago' },
-  { id: '3', name: 'document.docx', size: '0.8 MB', type: 'Word', uploadedAt: '3 days ago' },
-];
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [files, setFiles] = useState<FileItem[]>(mockFiles);
+  const [files, setFiles] = useState<FileItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleDelete = (id: string) => {
-    setFiles(files.filter(f => f.id !== id));
+  const fetchFiles = async () => {
+    try {
+      const data = await api.get<FileItem[]>('/files');
+      setFiles(data);
+    } catch {
+      // handled by api.ts redirect
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => { fetchFiles(); }, []);
+
+  const handleDelete = async (id: number) => {
+    try {
+      await api.delete(`/files/${id}`);
+      setFiles(files.filter(f => f.id !== id));
+    } catch {
+      // handled
+    }
+  };
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-foreground/60">Loading...</p>
+        </div>
+      </main>
+    );
+  }
 
   const isEmpty = files.length === 0;
 
@@ -38,7 +62,6 @@ export default function DashboardPage() {
       <div className="flex-1 flex flex-col p-8">
         <div className="max-w-4xl w-full mx-auto">
           {isEmpty ? (
-            // Empty State
             <div className="flex flex-col items-center justify-center py-20">
               <img
                 src="/review-bean.svg"
@@ -59,7 +82,6 @@ export default function DashboardPage() {
               </Button>
             </div>
           ) : (
-            // File List
             <div className="space-y-4">
               {files.map((file) => (
                 <div
@@ -72,15 +94,14 @@ export default function DashboardPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <h3 className="text-lg font-bold text-card-foreground truncate">
-                        {file.name}
+                        {file.original_filename}
                       </h3>
                       <p className="text-sm text-card-foreground/60">
-                        {file.size} • {file.type} • {file.uploadedAt}
+                        {(file.file_size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-shrink-0 ml-4">
                     <Button
                       onClick={() => router.push(`/files/${file.id}`)}

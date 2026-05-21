@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
@@ -16,37 +16,28 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Download, Lock, Globe, Trash2, Save, Eye, EyeOff } from 'lucide-react';
+import { api } from '@/lib/api';
+import { getToken } from '@/lib/auth';
 
 interface FileDetails {
-  id: string;
-  name: string;
+  id: number;
+  original_filename: string;
   description: string;
-  size: string;
-  type: string;
-  uploadedAt: string;
-  isPublic: boolean;
-  hasPassword: boolean;
+  file_size: number;
+  mime_type: string;
+  uploaded_at: string;
+  is_public: boolean;
+  has_password: boolean;
 }
-
-// Mock data
-const mockFile: FileDetails = {
-  id: '1',
-  name: 'presentation.pdf',
-  description: 'Q4 business presentation and analytics',
-  size: '2.5 MB',
-  type: 'PDF',
-  uploadedAt: '2 hours ago',
-  isPublic: false,
-  hasPassword: true,
-};
 
 export default function FileDetailsPage() {
   const router = useRouter();
   const params = useParams();
-  const [file, setFile] = useState<FileDetails>(mockFile);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedName, setEditedName] = useState(file.name);
-  const [editedDescription, setEditedDescription] = useState(file.description);
+  const [file, setFile] = useState<FileDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [editedName, setEditedName] = useState('');
+  const [editedDescription, setEditedDescription] = useState('');
+  const [editedIsPublic, setEditedIsPublic] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -54,60 +45,123 @@ export default function FileDetailsPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchFile = async () => {
+      try {
+        const data = await api.get<FileDetails>(`/files/${params.id}`);
+        setFile(data);
+        setEditedName(data.original_filename);
+        setEditedDescription(data.description || '');
+        setEditedIsPublic(data.is_public);
+      } catch {
+        router.push('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFile();
+  }, [params.id, router]);
 
   const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      setFile({
-        ...file,
-        name: editedName,
+    setError('');
+    try {
+      const data = await api.put<FileDetails>(`/files/${params.id}`, {
+        filename: editedName,
         description: editedDescription,
+        isPublic: editedIsPublic,
       });
+      setFile(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+    } finally {
       setIsSaving(false);
-    }, 500);
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     setShowDeleteDialog(false);
-    router.push('/dashboard');
+    try {
+      await api.delete(`/files/${params.id}`);
+      router.push('/dashboard');
+    } catch {
+      // handled
+    }
   };
 
-  const handleDownload = () => {
-    // Simulate download
-    console.log('Downloading:', file.name);
+  const handleDownload = async () => {
+    try {
+      const token = getToken();
+      const res = await fetch(`/api/files/${params.id}/download`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file?.original_filename || 'download';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError('Download failed');
+    }
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (newPassword !== confirmPassword) {
       alert('Passwords do not match');
       return;
     }
-    
     if (!newPassword) {
       alert('Password cannot be empty');
       return;
     }
 
-    isSaving ? null : setIsSaving(true);
-    setTimeout(() => {
-      setFile({ ...file, hasPassword: true });
-      setIsSaving(false);
+    setIsSaving(true);
+    try {
+      await api.put(`/files/${params.id}/password`, {
+        newPassword,
+        confirmPassword,
+      });
+      setFile(prev => prev ? { ...prev, has_password: true } : prev);
       setShowPasswordDialog(false);
       setNewPassword('');
       setConfirmPassword('');
       alert('Password updated successfully');
-    }, 500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to update password');
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (loading || !file) {
+    return (
+      <main className="min-h-screen bg-background flex flex-col">
+        <Header showBack title="Loading..." />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-foreground/60">Loading...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-background flex flex-col">
-      <Header showBack title={file.name} />
+      <Header showBack title={file.original_filename} />
 
       <div className="flex-1 flex flex-col p-8">
         <div className="max-w-2xl w-full mx-auto">
-          {/* File Details Card */}
           <div className="bg-card rounded-3xl p-8 border-2 border-card shadow-lg space-y-6">
-            {/* File Name Input */}
+            {error && (
+              <div className="bg-destructive/10 text-destructive text-sm rounded-xl px-4 py-3 text-center">
+                {error}
+              </div>
+            )}
+
             <div>
               <label className="block text-card-foreground font-semibold mb-3">
                 File name:
@@ -120,7 +174,6 @@ export default function FileDetailsPage() {
               />
             </div>
 
-            {/* Description Textarea */}
             <div>
               <label className="block text-card-foreground font-semibold mb-3">
                 Description:
@@ -132,26 +185,24 @@ export default function FileDetailsPage() {
               />
             </div>
 
-            {/* File Info - More Prominent */}
             <div className="bg-gradient-to-br from-accent/15 to-accent/5 rounded-2xl p-6 space-y-4 border border-accent/20">
               <h3 className="text-card-foreground font-bold text-lg mb-4">File Information</h3>
               <div className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <p className="text-xs text-card-foreground/60 font-semibold uppercase tracking-wide">File Size</p>
-                  <p className="text-lg font-bold text-card-foreground">{file.size}</p>
+                  <p className="text-lg font-bold text-card-foreground">{(file.file_size / 1024 / 1024).toFixed(2)} MB</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-card-foreground/60 font-semibold uppercase tracking-wide">File Type</p>
-                  <p className="text-lg font-bold text-card-foreground">{file.type}</p>
+                  <p className="text-lg font-bold text-card-foreground">{file.mime_type}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-card-foreground/60 font-semibold uppercase tracking-wide">Uploaded</p>
-                  <p className="text-lg font-bold text-card-foreground">{file.uploadedAt}</p>
+                  <p className="text-lg font-bold text-card-foreground">{new Date(file.uploaded_at).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
 
-            {/* Access Control */}
             <div className="space-y-4 border-t border-border pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -159,15 +210,13 @@ export default function FileDetailsPage() {
                   <div>
                     <p className="text-card-foreground font-semibold">Public Access</p>
                     <p className="text-xs text-card-foreground/60">
-                      {file.isPublic ? 'Anyone with the link can access' : 'File is private - only you can access'}
+                      {editedIsPublic ? 'Anyone with the link can access' : 'File is private - only you can access'}
                     </p>
                   </div>
                 </div>
                 <Switch
-                  checked={file.isPublic}
-                  onCheckedChange={(checked) =>
-                    setFile({ ...file, isPublic: checked })
-                  }
+                  checked={editedIsPublic}
+                  onCheckedChange={setEditedIsPublic}
                 />
               </div>
 
@@ -177,7 +226,7 @@ export default function FileDetailsPage() {
                   <div>
                     <p className="text-card-foreground font-semibold">Password Protection</p>
                     <p className="text-xs text-card-foreground/60">
-                      {file.hasPassword ? 'File is password protected' : 'No password set'}
+                      {file.has_password ? 'File is password protected' : 'No password set'}
                     </p>
                   </div>
                 </div>
@@ -190,7 +239,6 @@ export default function FileDetailsPage() {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="space-y-3 border-t border-border pt-6">
               <Button
                 onClick={handleDownload}
@@ -221,7 +269,6 @@ export default function FileDetailsPage() {
         </div>
       </div>
 
-      {/* Change Password Dialog */}
       <AlertDialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
         <AlertDialogContent className="bg-card border-2 border-card max-w-md">
           <AlertDialogHeader>
@@ -232,13 +279,10 @@ export default function FileDetailsPage() {
               Set or update the password to protect this file
             </AlertDialogDescription>
           </AlertDialogHeader>
-          
+
           <div className="space-y-4 my-4">
-            {/* New Password Field */}
             <div>
-              <label className="block text-card-foreground font-medium mb-2 text-sm">
-                New Password
-              </label>
+              <label className="block text-card-foreground font-medium mb-2 text-sm">New Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
                 <Input
@@ -258,11 +302,8 @@ export default function FileDetailsPage() {
               </div>
             </div>
 
-            {/* Confirm Password Field */}
             <div>
-              <label className="block text-card-foreground font-medium mb-2 text-sm">
-                Confirm Password
-              </label>
+              <label className="block text-card-foreground font-medium mb-2 text-sm">Confirm Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
                 <Input
@@ -297,7 +338,6 @@ export default function FileDetailsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="bg-card border-2 border-card">
           <AlertDialogHeader>
@@ -306,7 +346,7 @@ export default function FileDetailsPage() {
             </AlertDialogTitle>
             <AlertDialogDescription className="text-card-foreground/70">
               This action cannot be undone. Are you sure you want to delete{' '}
-              <span className="font-bold">{file.name}</span>?
+              <span className="font-bold">{file.original_filename}</span>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex gap-3">

@@ -5,31 +5,46 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Lock, User } from 'lucide-react';
+import { api } from '@/lib/api';
+import { setToken } from '@/lib/auth';
+import { useUser } from '@/app/context/user-context';
+
+interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  user: { id: number; username: string; email: string; role: string };
+}
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setUser } = useUser();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
 
-    // Simulate login - in a real app, this would verify credentials
-    setTimeout(() => {
+    try {
+      const data = await api.post<LoginResponse>('/auth/login', { username, password });
+      setToken(data.access_token);
+      setUser(data.user);
       router.push('/home');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   return (
     <main className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
-        {/* Card */}
         <div className="bg-card rounded-3xl p-8 border-2 border-card shadow-lg">
-          {/* Welcome Illustration */}
           <div className="flex justify-center mb-8">
             <img
               src="/welcome-bean.svg"
@@ -38,7 +53,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Title */}
           <h1 className="text-4xl font-bold text-card-foreground text-center mb-2">
             Login
           </h1>
@@ -46,9 +60,13 @@ export default function LoginPage() {
             Access your secure files
           </p>
 
-          {/* Form */}
+          {error && (
+            <div className="bg-destructive/10 text-destructive text-sm rounded-xl px-4 py-3 mb-4 text-center">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username Field */}
             <div>
               <label className="block text-card-foreground font-medium mb-3">
                 Username
@@ -65,7 +83,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password Field */}
             <div>
               <label className="block text-card-foreground font-medium mb-3">
                 Password
@@ -89,7 +106,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Submit Button */}
             <Button
               type="submit"
               disabled={isLoading || !username || !password}
@@ -99,7 +115,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Sign Up Link */}
           <div className="mt-6 text-center">
             <span className="text-card-foreground opacity-75">New here? </span>
             <button
