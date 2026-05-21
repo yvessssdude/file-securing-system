@@ -39,6 +39,9 @@ def upload_file(
     is_public: bool = False,
     file_password: str | None = None,
 ) -> File:
+    if not is_public and not file_password:
+        raise ValueError("Password is required for private files")
+
     validate_file(file)
 
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
@@ -89,6 +92,9 @@ def update_file(
     if not db_file or db_file.owner_id != user_id:
         raise ValueError("File not found or access denied")
 
+    if not is_public and not db_file.file_password_hash:
+        raise ValueError("Set a password first before making the file private")
+
     db_file.original_filename = filename
     db_file.description = description
     db_file.is_public = is_public
@@ -106,6 +112,9 @@ def change_file_password(
     db_file = get_file_by_id(db, file_id)
     if not db_file or db_file.owner_id != user_id:
         raise ValueError("File not found or access denied")
+
+    if not new_password and not db_file.is_public:
+        raise ValueError("Private files must have a password")
 
     db_file.file_password_hash = hash_password(new_password) if new_password else None
     db.commit()
@@ -133,7 +142,7 @@ def get_public_files(
     page: int = 1,
     per_page: int = 10,
 ) -> tuple[list[dict], int]:
-    query = db.query(File).filter(File.is_public == True)
+    query = db.query(File)
 
     if search:
         query = query.filter(File.original_filename.ilike(f"%{search}%"))
@@ -189,10 +198,4 @@ def can_access_file(db: Session, file_id: int, user_id: int) -> bool:
         return False
     if db_file.owner_id == user_id:
         return True
-    if db_file.is_public:
-        return True
-    perm = db.query(FilePermission).filter(
-        FilePermission.file_id == file_id,
-        FilePermission.user_id == user_id,
-    ).first()
-    return perm is not None
+    return True

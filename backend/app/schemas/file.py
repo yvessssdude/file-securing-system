@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from datetime import datetime
 from typing import Optional
 
@@ -19,11 +19,12 @@ class FileResponse(BaseModel):
     class Config:
         from_attributes = True
 
+    @model_validator(mode="before")
     @classmethod
-    def from_orm_with_virtual(cls, orm_obj):
-        result = cls.from_orm(orm_obj)
-        result.has_password = orm_obj.file_password_hash is not None
-        return result
+    def compute_has_password(cls, data):
+        if hasattr(data, "file_password_hash"):
+            data.has_password = data.file_password_hash is not None
+        return data
 
 
 class UpdateFileRequest(BaseModel):

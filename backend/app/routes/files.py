@@ -123,14 +123,11 @@ def download_file(
     if not db_file:
         raise HTTPException(status_code=404, detail="File not found")
 
-    if db_file.file_password_hash:
+    if db_file.owner_id != current_user.id and db_file.file_password_hash:
         if not password:
             raise HTTPException(status_code=401, detail="Password required")
         if not file_service.verify_file_password(db, file_id, password):
             raise HTTPException(status_code=403, detail="Incorrect password")
-
-    if not file_service.can_access_file(db, file_id, current_user.id):
-        raise HTTPException(status_code=403, detail="Access denied")
 
     if not os.path.exists(db_file.file_path):
         raise HTTPException(status_code=404, detail="File not found on disk")

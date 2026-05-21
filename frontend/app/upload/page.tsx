@@ -54,6 +54,12 @@ export default function UploadPage() {
     e.preventDefault();
     if (!selectedFile || !fileName) return;
     setError('');
+
+    if (!isPublic && !filePassword) {
+      setError('Password is required for private files');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -83,6 +89,7 @@ export default function UploadPage() {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
             className="flex-1 flex flex-col gap-6"
           >
           <h2 className="text-3xl font-bold text-foreground">Upload a file</h2>
@@ -143,16 +150,6 @@ export default function UploadPage() {
               )}
             </div>
           </div>
-
-          {selectedFile && (
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="mt-6 w-full bg-input text-foreground hover:bg-muted rounded-full py-6 font-bold text-lg"
-            >
-              {isSubmitting ? 'Uploading...' : 'SUBMIT'}
-            </Button>
-          )}
           </div>
         </div>
 
@@ -224,7 +221,9 @@ export default function UploadPage() {
                   />
                 </div>
                 <p className="text-xs text-card-foreground/60 ml-8">
-                  {isPublic ? 'Anyone with the link can access this file' : 'File is private - only you can access'}
+                  {isPublic
+                    ? 'Anyone can download without a password'
+                    : 'Password required to download'}
                 </p>
               </div>
 
@@ -239,20 +238,23 @@ export default function UploadPage() {
                   type="password"
                   value={filePassword}
                   onChange={(e) => setFilePassword(e.target.value)}
-                  placeholder="Set a password (optional)"
+                  placeholder={isPublic ? 'Optional' : 'Required'}
                   className="w-full bg-input text-foreground border-border rounded-full px-6 py-3 focus:border-accent focus:ring-2 focus:ring-accent/30"
                 />
                 <p className="text-xs text-card-foreground/60 mt-2">
-                  Require a password to download this file
+                  {isPublic
+                    ? 'Optional - set a password to restrict downloads'
+                    : 'Required - users need this password to download'}
                 </p>
               </div>
             </div>
 
             <Button
-              className="w-full bg-input text-foreground hover:bg-muted rounded-full py-3 font-bold"
-              disabled={!fileName}
+              onClick={handleSubmit}
+              disabled={isSubmitting || !selectedFile || !fileName}
+              className="w-full bg-accent text-foreground hover:bg-accent/90 disabled:bg-accent/50 rounded-full py-3 font-bold"
             >
-              Save
+              {isSubmitting ? 'Uploading...' : 'Submit'}
             </Button>
           </div>
         </div>
