@@ -130,7 +130,7 @@ export default function AdminDashboard() {
         <aside className="w-64 bg-card border-r border-border p-6 flex flex-col gap-4">
           <Button
             variant={activeTab === 'logs' ? 'default' : 'ghost'}
-            className="w-full justify-start text-base"
+            className="w-full justify-start text-card-foreground"
             onClick={() => setActiveTab('logs')}
           >
             <Activity className="w-5 h-5 mr-3" />
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
           </Button>
           <Button
             variant={activeTab === 'approvals' ? 'default' : 'ghost'}
-            className="w-full justify-start text-base"
+            className="w-full justify-start text-card-foreground"
             onClick={() => setActiveTab('approvals')}
           >
             <ShieldAlert className="w-5 h-5 mr-3" />
@@ -146,7 +146,7 @@ export default function AdminDashboard() {
           </Button>
           <Button
             variant={activeTab === 'users' ? 'default' : 'ghost'}
-            className="w-full justify-start text-base"
+            className="w-full justify-start text-card-foreground"
             onClick={() => setActiveTab('users')}
           >
             <Users className="w-5 h-5 mr-3" />
@@ -154,7 +154,7 @@ export default function AdminDashboard() {
           </Button>
           <Button
             variant={activeTab === 'files' ? 'default' : 'ghost'}
-            className="w-full justify-start text-base"
+            className="w-full justify-start text-card-foreground"
             onClick={() => setActiveTab('files')}
           >
             <FileText className="w-5 h-5 mr-3" />
@@ -175,7 +175,7 @@ export default function AdminDashboard() {
           ) : (
             <div className="bg-card rounded-2xl border-2 border-border overflow-hidden shadow-sm">
               <table className="w-full text-left border-collapse">
-                <thead className="bg-muted text-card-foreground/80 uppercase text-xs">
+                <thead className="bg-muted text-foreground uppercase text-xs">
                   {activeTab === 'logs' && (
                     <tr>
                       <th className="px-6 py-4 font-bold border-b border-border">Timestamp</th>
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4 text-card-foreground">{new Date(log.timestamp).toLocaleString()}</td>
                       <td className="px-6 py-4 text-card-foreground">{log.user_id || '-'}</td>
                       <td className="px-6 py-4 text-card-foreground font-semibold">{log.action}</td>
-                      <td className="px-6 py-4 text-card-foreground/80">{log.ip_address || '-'}</td>
+                      <td className="px-6 py-4 text-card-foreground">{log.ip_address || '-'}</td>
                     </tr>
                   ))}
 
