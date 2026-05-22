@@ -22,7 +22,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @limiter.limit("5/minute")
 def register(request: Request, body: RegisterRequest, db: Session = Depends(get_db)):
     try:
-        user = auth_service.register_user(db, body.username, body.email, body.password)
+        user = auth_service.register_user(db, body.username, body.email, body.password, body.request_admin)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

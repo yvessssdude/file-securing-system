@@ -5,7 +5,7 @@ from app.auth.jwt_handler import create_access_token
 from app.schemas.auth import UserResponse
 
 
-def register_user(db: Session, username: str, email: str, password: str) -> User:
+def register_user(db: Session, username: str, email: str, password: str, request_admin: bool = False) -> User:
     existing = db.query(User).filter(
         (User.username == username) | (User.email == email)
     ).first()
@@ -15,11 +15,13 @@ def register_user(db: Session, username: str, email: str, password: str) -> User
     if len(password) < 6:
         raise ValueError("Password must be at least 6 characters")
 
+    role = "pending_admin" if request_admin else "user"
+
     user = User(
         username=username,
         email=email,
         password_hash=hash_password(password),
-        role="user",
+        role=role,
     )
     db.add(user)
     db.commit()
