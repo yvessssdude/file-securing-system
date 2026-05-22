@@ -175,7 +175,7 @@ export default function AdminDashboard() {
           ) : (
             <div className="bg-card rounded-2xl border-2 border-border overflow-hidden shadow-sm">
               <table className="w-full text-left border-collapse">
-                <thead className="bg-muted text-muted-foreground uppercase text-xs">
+                <thead className="bg-muted text-card-foreground/80 uppercase text-xs">
                   {activeTab === 'logs' && (
                     <tr>
                       <th className="px-6 py-4 font-bold border-b border-border">Timestamp</th>
@@ -211,24 +211,24 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="text-sm">
                   {activeTab === 'logs' && logs.length === 0 && (
-                    <tr><td colSpan={4} className="px-6 py-8 text-center text-foreground/50">No logs found</td></tr>
+                    <tr><td colSpan={4} className="px-6 py-8 text-center text-card-foreground/60">No logs found</td></tr>
                   )}
                   {activeTab === 'logs' && logs.map((log) => (
                     <tr key={log.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
                       <td className="px-6 py-4 text-card-foreground">{new Date(log.timestamp).toLocaleString()}</td>
                       <td className="px-6 py-4 text-card-foreground">{log.user_id || '-'}</td>
                       <td className="px-6 py-4 text-card-foreground font-semibold">{log.action}</td>
-                      <td className="px-6 py-4 text-foreground/70">{log.ip_address || '-'}</td>
+                      <td className="px-6 py-4 text-card-foreground/80">{log.ip_address || '-'}</td>
                     </tr>
                   ))}
 
                   {activeTab === 'approvals' && approvals.length === 0 && (
-                    <tr><td colSpan={4} className="px-6 py-8 text-center text-foreground/50">No pending approvals</td></tr>
+                    <tr><td colSpan={4} className="px-6 py-8 text-center text-card-foreground/60">No pending approvals</td></tr>
                   )}
                   {activeTab === 'approvals' && approvals.map((u) => (
                     <tr key={u.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
                       <td className="px-6 py-4 text-card-foreground font-bold">{u.username}</td>
-                      <td className="px-6 py-4 text-foreground/70">{u.email}</td>
+                      <td className="px-6 py-4 text-card-foreground/80">{u.email}</td>
                       <td className="px-6 py-4">
                         <span className="bg-accent/20 text-accent px-3 py-1 rounded-full text-xs font-bold">
                           {u.role}
@@ -248,7 +248,7 @@ export default function AdminDashboard() {
                   ))}
 
                   {activeTab === 'users' && users.length === 0 && (
-                    <tr><td colSpan={4} className="px-6 py-8 text-center text-foreground/50">No users found</td></tr>
+                    <tr><td colSpan={4} className="px-6 py-8 text-center text-card-foreground/60">No users found</td></tr>
                   )}
                   {activeTab === 'users' && users.map((u) => (
                     <tr key={u.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
@@ -256,7 +256,7 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4 text-card-foreground font-bold">{u.username}</td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          u.role === 'admin' ? 'bg-primary/20 text-primary-foreground' : 'bg-muted text-foreground'
+                           u.role === 'admin' ? 'bg-primary/20 text-primary-foreground' : 'bg-muted text-card-foreground'
                         }`}>
                           {u.role}
                         </span>
@@ -277,13 +277,13 @@ export default function AdminDashboard() {
                   ))}
 
                   {activeTab === 'files' && files.length === 0 && (
-                    <tr><td colSpan={4} className="px-6 py-8 text-center text-foreground/50">No files found</td></tr>
+                    <tr><td colSpan={4} className="px-6 py-8 text-center text-card-foreground/60">No files found</td></tr>
                   )}
                   {activeTab === 'files' && files.map((f) => (
                     <tr key={f.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
                       <td className="px-6 py-4 text-card-foreground font-bold">{f.original_filename}</td>
-                      <td className="px-6 py-4 text-foreground/70">{(f.file_size / 1024 / 1024).toFixed(2)}</td>
-                      <td className="px-6 py-4 text-foreground/70">{new Date(f.uploaded_at).toLocaleString()}</td>
+                      <td className="px-6 py-4 text-card-foreground/80">{(f.file_size / 1024 / 1024).toFixed(2)}</td>
+                      <td className="px-6 py-4 text-card-foreground/80">{new Date(f.uploaded_at).toLocaleString()}</td>
                       <td className="px-6 py-4 text-right">
                         <Button 
                           onClick={() => handleDeleteFile(f.id)}
