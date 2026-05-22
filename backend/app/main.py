@@ -78,30 +78,3 @@ app.include_router(admin.router, prefix="/api")
 @app.get("/api/health")
 def health_check():
     return {"status": "ok"}
-
-
-@app.post("/api/setup")
-def setup_admin():
-    """One-time setup endpoint: creates admin account if none exists."""
-    from app.models.user import User
-    from app.auth.password_handler import hash_password
-
-    db = SessionLocal()
-    try:
-        exists = db.query(User).filter(User.role == "admin").first()
-        if exists:
-            return {"message": "Admin already exists", "username": exists.username}
-
-        admin_user = User(
-            username="admin",
-            email="admin@bean.local",
-            password_hash=hash_password("Admin!123"),
-            role="admin",
-        )
-        db.add(admin_user)
-        db.commit()
-        return {"message": "Admin account created", "username": "admin", "password": "Admin!123"}
-    except Exception as e:
-        return {"error": str(e)}
-    finally:
-        db.close()
