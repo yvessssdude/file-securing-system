@@ -15,7 +15,7 @@ router = APIRouter(prefix="/files", tags=["Files"])
 
 
 @router.post("/upload")
-@limiter.limit("20/minute")
+@limiter.limit("100/minute")
 def upload(
     request: Request,
     file: UploadFile = File(...),

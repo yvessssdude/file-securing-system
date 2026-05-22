@@ -19,7 +19,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/register")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def register(request: Request, body: RegisterRequest, db: Session = Depends(get_db)):
     try:
         user = auth_service.register_user(db, body.username, body.email, body.password, body.request_admin)
@@ -37,7 +37,7 @@ def register(request: Request, body: RegisterRequest, db: Session = Depends(get_
 
 
 @router.post("/login")
-@limiter.limit("10/minute")
+@limiter.limit("100/minute")
 def login(request: Request, body: LoginRequest, db: Session = Depends(get_db)):
     try:
         user = auth_service.authenticate_user(db, body.username, body.password)

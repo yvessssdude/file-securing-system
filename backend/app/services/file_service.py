@@ -83,7 +83,8 @@ def upload_file(
 
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
-    stored_filename = f"{uuid.uuid4()}_{filename}"
+    safe_filename = os.path.basename(filename)
+    stored_filename = f"{uuid.uuid4()}_{safe_filename}"
     file_path = os.path.join(settings.UPLOAD_DIR, stored_filename)
 
     content = file.file.read()
