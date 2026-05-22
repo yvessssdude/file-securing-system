@@ -129,32 +129,32 @@ export default function AdminDashboard() {
         {/* Sidebar */}
         <aside className="w-64 bg-card border-r border-border p-6 flex flex-col gap-4">
           <Button
-            variant={activeTab === 'logs' ? 'default' : 'ghost'}
-            className="w-full justify-start text-card-foreground"
+            variant="ghost"
+            className={`w-full justify-start ${activeTab === 'logs' ? 'bg-accent text-foreground font-bold shadow-md' : 'text-card-foreground/70 hover:bg-accent/10 hover:text-card-foreground'}`}
             onClick={() => setActiveTab('logs')}
           >
             <Activity className="w-5 h-5 mr-3" />
             Event Logs
           </Button>
           <Button
-            variant={activeTab === 'approvals' ? 'default' : 'ghost'}
-            className="w-full justify-start text-card-foreground"
+            variant="ghost"
+            className={`w-full justify-start ${activeTab === 'approvals' ? 'bg-accent text-foreground font-bold shadow-md' : 'text-card-foreground/70 hover:bg-accent/10 hover:text-card-foreground'}`}
             onClick={() => setActiveTab('approvals')}
           >
             <ShieldAlert className="w-5 h-5 mr-3" />
             Approvals
           </Button>
           <Button
-            variant={activeTab === 'users' ? 'default' : 'ghost'}
-            className="w-full justify-start text-card-foreground"
+            variant="ghost"
+            className={`w-full justify-start ${activeTab === 'users' ? 'bg-accent text-foreground font-bold shadow-md' : 'text-card-foreground/70 hover:bg-accent/10 hover:text-card-foreground'}`}
             onClick={() => setActiveTab('users')}
           >
             <Users className="w-5 h-5 mr-3" />
             Manage Users
           </Button>
           <Button
-            variant={activeTab === 'files' ? 'default' : 'ghost'}
-            className="w-full justify-start text-card-foreground"
+            variant="ghost"
+            className={`w-full justify-start ${activeTab === 'files' ? 'bg-accent text-foreground font-bold shadow-md' : 'text-card-foreground/70 hover:bg-accent/10 hover:text-card-foreground'}`}
             onClick={() => setActiveTab('files')}
           >
             <FileText className="w-5 h-5 mr-3" />
@@ -256,7 +256,7 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4 text-card-foreground font-bold">{u.username}</td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                           u.role === 'admin' ? 'bg-primary/20 text-primary-foreground' : 'bg-muted text-card-foreground'
+                           u.role === 'admin' ? 'bg-accent text-foreground' : 'bg-card text-card-foreground border border-border'
                         }`}>
                           {u.role}
                         </span>
