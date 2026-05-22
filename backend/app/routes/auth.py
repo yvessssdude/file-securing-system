@@ -39,7 +39,12 @@ def register(request: Request, body: RegisterRequest, db: Session = Depends(get_
 @router.post("/login")
 @limiter.limit("10/minute")
 def login(request: Request, body: LoginRequest, db: Session = Depends(get_db)):
-    user = auth_service.authenticate_user(db, body.username, body.password)
+    try:
+        user = auth_service.authenticate_user(db, body.username, body.password)
+    except ValueError as e:
+        audit_service.log_action(db, "LOGIN_FAILED_LOCKED", ip_address=request.client.host)
+        raise HTTPException(status_code=400, detail=str(e))
+
     if not user:
         audit_service.log_action(db, "LOGIN_FAILED", ip_address=request.client.host)
         raise HTTPException(status_code=401, detail="Invalid username or password")

@@ -12,6 +12,23 @@ settings = get_settings()
 ALLOWED_EXTENSIONS = {".txt", ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".png", ".jpg", ".jpeg", ".gif", ".csv", ".json", ".zip", ".md"}
 DANGEROUS_EXTENSIONS = {".exe", ".sh", ".bat", ".php", ".msi", ".cmd", ".vbs", ".ps1"}
 
+MAGIC_SIGNATURES = {
+    ".pdf": [b"%PDF"],
+    ".png": [b"\x89PNG\r\n\x1a\n"],
+    ".jpg": [b"\xff\xd8\xff"],
+    ".jpeg": [b"\xff\xd8\xff"],
+    ".gif": [b"GIF8"],
+    ".zip": [b"PK\x03\x04"],
+    ".docx": [b"PK\x03\x04"],
+    ".xlsx": [b"PK\x03\x04"],
+    ".pptx": [b"PK\x03\x04"],
+}
+
+BANNED_MAGIC = {
+    b"MZ": "Windows Executable/DLL",
+    b"\x7fELF": "Linux Executable/Shared Object",
+}
+
 
 def validate_file(file: UploadFile) -> None:
     ext = os.path.splitext(file.filename)[1].lower() if file.filename else ""
@@ -21,6 +38,26 @@ def validate_file(file: UploadFile) -> None:
 
     if ext not in ALLOWED_EXTENSIONS:
         raise ValueError(f"File type '{ext}' is not supported")
+
+    # Verify binary magic bytes to prevent extension spoofing
+    file.file.seek(0)
+    header = file.file.read(16)
+    file.file.seek(0)
+
+    # Check for banned binary executables
+    for banned, name in BANNED_MAGIC.items():
+        if header.startswith(banned):
+            raise ValueError(f"Dangerous file signature detected: {name} is not allowed")
+
+    # Cross-reference extension with expected magic bytes
+    if ext in MAGIC_SIGNATURES:
+        valid_signature = False
+        for sig in MAGIC_SIGNATURES[ext]:
+            if header.startswith(sig):
+                valid_signature = True
+                break
+        if not valid_signature:
+            raise ValueError(f"File content signature mismatch for extension '{ext}'")
 
     max_bytes = settings.MAX_FILE_SIZE_MB * 1024 * 1024
     file.file.seek(0, 2)
@@ -198,4 +235,9 @@ def can_access_file(db: Session, file_id: int, user_id: int) -> bool:
         return False
     if db_file.owner_id == user_id:
         return True
-    return True
+    # Check if this file was explicitly shared with the requesting user
+    perm = db.query(FilePermission).filter(
+        FilePermission.file_id == file_id,
+        FilePermission.user_id == user_id,
+    ).first()
+    return perm is not None
