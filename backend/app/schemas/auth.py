@@ -10,6 +10,7 @@ class RegisterRequest(BaseModel):
     username: str
     email: str
     password: str
+    request_admin: bool = False
 
 
 class TokenResponse(BaseModel):

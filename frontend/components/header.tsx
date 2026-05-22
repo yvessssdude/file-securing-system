@@ -1,9 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { User, LogOut, ArrowLeft } from 'lucide-react';
+import { User, LogOut, ArrowLeft, Shield } from 'lucide-react';
 import { Button } from './ui/button';
 import { removeToken } from '@/lib/auth';
+import { useUser } from '@/app/context/user-context';
 
 interface HeaderProps {
   title?: string;
@@ -12,6 +13,7 @@ interface HeaderProps {
 
 export function Header({ title, showBack }: HeaderProps = {}) {
   const router = useRouter();
+  const { user } = useUser();
 
   const handleLogout = () => {
     removeToken();
@@ -58,6 +60,22 @@ export function Header({ title, showBack }: HeaderProps = {}) {
         </div>
 
         <div className="flex items-center gap-2">
+          {user?.role === 'admin' && (
+            <>
+              <button
+                onClick={() => router.push('/admin')}
+                className="group relative p-3 text-card-foreground transition-all duration-300"
+                title="Admin Dashboard"
+              >
+                <div className="absolute inset-0 bg-accent/15 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300 origin-center"></div>
+                <Shield className="w-5 h-5 relative z-10 transition-all duration-300 group-hover:text-accent group-hover:scale-110" style={{
+                  animation: 'icon-bounce'
+                }} />
+              </button>
+              <div className="w-px h-6 bg-border/50 mx-1"></div>
+            </>
+          )}
+
           <button
             onClick={() => router.push('/profile')}
             className="group relative p-3 text-card-foreground transition-all duration-300"

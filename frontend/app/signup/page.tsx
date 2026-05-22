@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Lock, User, Mail, Eye, EyeOff } from 'lucide-react';
+import { Lock, User, Mail, Eye, EyeOff, Shield } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { api } from '@/lib/api';
 import { setToken } from '@/lib/auth';
 import { useUser } from '@/app/context/user-context';
@@ -26,6 +27,7 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [requestAdmin, setRequestAdmin] = useState(false);
 
   const validatePassword = (pw: string) => {
     const rx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
@@ -49,7 +51,12 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const data = await api.post<RegisterResponse>('/auth/register', { username, email, password });
+      const data = await api.post<RegisterResponse>('/auth/register', { 
+        username, 
+        email, 
+        password,
+        request_admin: requestAdmin
+      });
       setToken(data.access_token);
       setUser(data.user);
       router.push('/home');
@@ -174,6 +181,23 @@ export default function SignupPage() {
                   )}
                 </button>
               </div>
+            </div>
+
+            <div className="flex items-center justify-between bg-foreground/5 rounded-2xl p-4 border border-border">
+              <div className="flex items-center gap-3">
+                <Shield className="w-5 h-5 text-accent" />
+                <div>
+                  <p className="text-card-foreground font-semibold">Signup as Admin</p>
+                  <p className="text-xs text-card-foreground/60">
+                    Requires approval from an existing admin
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={requestAdmin}
+                onCheckedChange={setRequestAdmin}
+                className="bg-accent/30 data-[state=checked]:bg-accent"
+              />
             </div>
 
             <Button

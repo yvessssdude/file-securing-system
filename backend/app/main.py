@@ -6,9 +6,35 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy import exc as sa_exc
 
-from app.database import engine, Base
+from app.database import engine, Base, SessionLocal
 from app.middleware.rate_limit import limiter
 from app.routes import auth, files, share, admin
+
+
+def seed_admin():
+    """Create a default admin account on first boot if none exists."""
+    from app.models.user import User
+    from app.auth.password_handler import hash_password
+
+    db = SessionLocal()
+    try:
+        exists = db.query(User).filter(User.role == "admin").first()
+        if not exists:
+            admin_user = User(
+                username="admin",
+                email="admin@bean.local",
+                password_hash=hash_password("Admin!123"),
+                role="admin",
+            )
+            db.add(admin_user)
+            db.commit()
+            print("✅ Default admin account created: admin / Admin!123")
+        else:
+            print("ℹ️  Admin account already exists, skipping seed.")
+    except Exception as e:
+        print(f"⚠️  Could not seed admin: {e}")
+    finally:
+        db.close()
 
 
 @asynccontextmanager
@@ -21,6 +47,7 @@ async def lifespan(app: FastAPI):
             if i >= 29:
                 raise
             time.sleep(2)
+    seed_admin()
     yield
 
 
