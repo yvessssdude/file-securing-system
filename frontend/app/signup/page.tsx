@@ -28,6 +28,7 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [requestAdmin, setRequestAdmin] = useState(false);
+  const [consentAgreed, setConsentAgreed] = useState(false);
 
   const validatePassword = (pw: string) => {
     const rx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
@@ -37,6 +38,11 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!consentAgreed) {
+      setError('You must agree to the data usage notice before creating an account');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -198,6 +204,24 @@ export default function SignupPage() {
                 onCheckedChange={setRequestAdmin}
                 className="bg-accent/30 data-[state=checked]:bg-accent"
               />
+            </div>
+
+            <div className="bg-blue-500/10 rounded-2xl p-4 border border-blue-500/20">
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="consent-checkbox"
+                  checked={consentAgreed}
+                  onChange={(e) => setConsentAgreed(e.target.checked)}
+                  className="mt-1 w-4 h-4 rounded accent-accent cursor-pointer flex-shrink-0"
+                />
+                <label htmlFor="consent-checkbox" className="text-xs text-card-foreground/80 leading-relaxed cursor-pointer">
+                  <span className="font-semibold text-card-foreground">Data Usage Notice:</span>{' '}
+                  By creating an account, you acknowledge that your <strong>email</strong> and <strong>username</strong> will 
+                  be used for authentication and system communication purposes. All data is provided voluntarily. 
+                  You may request account deletion at any time to withdraw your consent and remove your data from the system.
+                </label>
+              </div>
             </div>
 
             <Button
